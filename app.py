@@ -39,7 +39,6 @@ def request_and_save(url, filename):
 # app endpoints
 @app.route('/', methods=['GET', 'POST'])
 def index():
-
     filename = None
     if request.method == 'POST':
         f = request.files['file']
@@ -51,23 +50,28 @@ def index():
 
 @app.route('/watermark', methods=['POST'])
 def apply_watermark():
-    bucket_name = os.environ['BUCKET_NAME'] # INSERT YOUR BUCKET NAME
+    bucket_name = os.environ['BUCKET_NAME']  # INSERT YOUR BUCKET NAME
 
     filename = request.form['filename']
     path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
     r1 = s3_client.upload_file(path, bucket_name, filename, ExtraArgs={'ACL': 'public-read'})
 
     # GENERATE REQUEST FOR QRACKAJACK
-    qr_req_url = "https://qrackajack.expeditedaddons.com/?api_key=" + os.environ['QRACKAJACK_API_KEY'] + "&bg_color=%23ffffff&content=" + get_s3_url(bucket_name, filename) + "&fg_color=%23000000&height=256&width=256"
+    qr_req_url = "https://qrackajack.expeditedaddons.com/?api_key=" + os.environ[
+        'QRACKAJACK_API_KEY'] + "&bg_color=%23ffffff&content=" + get_s3_url(bucket_name,
+                                                                            filename) + "&fg_color=%23000000&height=256&width=256"
 
     qr_name = f"qr_{filename}"
     qr_path = request_and_save(qr_req_url, qr_name)
 
     r2 = s3_client.upload_file(qr_path, bucket_name, qr_name, ExtraArgs={'ACL': 'public-read'})
 
+    qr = get_s3_url(bucket_name, qr_name)
+    image = get_s3_url(bucket_name, filename)
 
     # GENERATE REQUEST FOR WATERMARKER
-    watermark_req_url = ""
+    watermark_req_url = "https://watermarker.expeditedaddons.com/?api_key=Z5OKR6V8ABUPLMH52JN7FCQS7D23Y8T199301EG04X64IW&image_url=" + \
+                        image + "&watermark_url=" + qr + "&opacity=50&position=center&width=10&height=10"
 
     watermark_name = f"watermark_{filename}"
     request_and_save(watermark_req_url, watermark_name)
