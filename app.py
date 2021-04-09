@@ -1,11 +1,10 @@
-import glob
 import os
 from io import BytesIO
 
 import boto3
 import requests
 from PIL import Image
-from flask import Flask, render_template, request, flash
+from flask import Flask, render_template, request
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
@@ -59,7 +58,7 @@ def apply_watermark():
     r1 = s3_client.upload_file(path, bucket_name, filename, ExtraArgs={'ACL': 'public-read'})
 
     # GENERATE REQUEST FOR QRACKAJACK
-    qr_req_url = ""
+    qr_req_url = "https://qrackajack.expeditedaddons.com/?api_key=" + os.environ['QRACKAJACK_API_KEY'] + "&bg_color=%23ffffff&content=" + get_s3_url(bucket_name, filename) + "&fg_color=%23000000&height=256&width=256"
 
     qr_name = f"qr_{filename}"
     qr_path = request_and_save(qr_req_url, qr_name)
